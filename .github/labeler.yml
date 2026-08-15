@@ -37,6 +37,14 @@ documentation:
         - any-glob-to-any-file:
             - docs/**
             - media/**
+            - LEX.md
+Lex:
+    - changed-files:
+        - any-glob-to-any-file:
+            - lex/**
+            - docs/lex/**
+            - LEX.md
+            - .github/workflows/lex-*.yml
 testing:
     - changed-files:
         - any-glob-to-any-file:
