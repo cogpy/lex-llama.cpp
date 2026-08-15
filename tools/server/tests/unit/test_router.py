@@ -205,3 +205,131 @@ def test_router_api_key_required():
     )
     assert authed.status_code == 200
     assert "error" not in authed.body
+
+
+def test_router_load_model_not_found():
+    global server
+    server.no_models_autoload = True
+    server.start()
+
+    res = server.make_request(
+        "POST", "/models/load", data={"model": "non-existent/model"}
+    )
+    assert res.status_code == 404
+    assert "error" in res.body
+    err = res.body["error"]
+    assert "not found" in err.get("message", "").lower()
+
+
+def test_router_unload_model_not_found():
+    global server
+    server.start()
+
+    res = server.make_request(
+        "POST", "/models/unload", data={"model": "non-existent/model"}
+    )
+    assert res.status_code in (400, 404)
+    assert "error" in res.body
+    err = res.body["error"]
+    assert "not found" in err.get("message", "").lower()
+
+
+def test_router_unload_model_not_running():
+    global server
+    server.no_models_autoload = True
+    server.start()
+    model_id = "ggml-org/tinygemma3-GGUF:Q8_0"
+
+    # Ensure the model is known but not running.
+    assert _get_model_status(model_id) != "loaded"
+
+    res = server.make_request("POST", "/models/unload", data={"model": model_id})
+    assert res.status_code == 400
+    assert "error" in res.body
+    assert "not running" in res.body["error"].get("message", "").lower()
+
+
+def test_router_load_already_running():
+    global server
+    server.start()
+    model_id = "ggml-org/tinygemma3-GGUF:Q8_0"
+
+    _load_model_and_wait(model_id)
+
+    res = server.make_request("POST", "/models/load", data={"model": model_id})
+    assert res.status_code == 400
+    assert "error" in res.body
+    assert "already running" in res.body["error"].get("message", "").lower()
+
+
+def test_router_concurrent_load_unload_stress():
+    """Lex P0: concurrent admin load/unload should not crash the router."""
+    global server
+    server.models_max = 2
+    server.no_models_autoload = True
+    server.start()
+
+    models = [
+        "ggml-org/tinygemma3-GGUF:Q8_0",
+        "ggml-org/test-model-stories260K:F32",
+    ]
+
+    def load_one(model_id: str):
+        return server.make_request("POST", "/models/load", data={"model": model_id})
+
+    def unload_one(model_id: str):
+        return server.make_request("POST", "/models/unload", data={"model": model_id})
+
+    # Parallel load both models
+    load_results = parallel_function_calls([
+        (load_one, (models[0],)),
+        (load_one, (models[1],)),
+    ])
+    assert all(res is not None for res in load_results)
+    for res in load_results:
+        assert res.status_code == 200, res.body
+        assert res.body.get("success") is True
+
+    for model_id in models:
+        _wait_for_model_status(model_id, {"loaded"}, timeout=120)
+
+    # Parallel unload
+    unload_results = parallel_function_calls([
+        (unload_one, (models[0],)),
+        (unload_one, (models[1],)),
+    ])
+    assert all(res is not None for res in unload_results)
+    for res in unload_results:
+        assert res.status_code == 200, res.body
+        assert res.body.get("success") is True
+
+    for model_id in models:
+        _wait_for_model_status(model_id, {"unloaded"}, timeout=120)
+
+    # Router should still answer props after stress
+    props = server.make_request("GET", "/props")
+    assert props.status_code == 200
+    assert props.body.get("role") == "router"
+
+
+def test_router_chat_model_not_found_error_shape():
+    global server
+    server.start()
+
+    res = server.make_request(
+        "POST",
+        "/v1/chat/completions",
+        data={
+            "model": "non-existent/model",
+            "messages": [{"role": "user", "content": "hello"}],
+            "max_tokens": 4,
+        },
+    )
+    assert res.status_code in (400, 404)
+    assert "error" in res.body
+    err = res.body["error"]
+    assert isinstance(err, dict)
+    assert err.get("message")
+    # Keep a stable machine-readable type for clients when present
+    if "type" in err:
+        assert isinstance(err["type"], str)

@@ -135,6 +135,15 @@ def do_test_completion_with_required_tool_tiny(server: ServerProcess, tool: dict
     ("meta-llama-Llama-3.3-70B-Instruct",             TEST_TOOL,            "success"),
     ("meta-llama-Llama-3.3-70B-Instruct",             PYTHON_TOOL,          "code"),
     ("meta-llama-Llama-3.3-70B-Instruct",             PYTHON_TOOL,          "code"),
+    # Lex priority template families (fast golden set; one TEST_TOOL case each)
+    ("meta-llama-Llama-3.1-8B-Instruct",              TEST_TOOL,            "success"),
+    ("meta-llama-Llama-3.2-3B-Instruct",              TEST_TOOL,            "success"),
+    ("NousResearch-Hermes-2-Pro-Llama-3-8B-tool_use", TEST_TOOL,            "success"),
+    ("NousResearch-Hermes-3-Llama-3.1-8B-tool_use",   TEST_TOOL,            "success"),
+    ("Qwen-Qwen2.5-7B-Instruct",                      TEST_TOOL,            "success"),
+    ("mistralai-Mistral-Nemo-Instruct-2407",          TEST_TOOL,            "success"),
+    ("deepseek-ai-DeepSeek-R1-Distill-Llama-8B",      TEST_TOOL,            "success"),
+    ("CohereForAI-c4ai-command-r7b-12-2024-tool_use", TEST_TOOL,            "success"),
 ])
 def test_completion_with_required_tool_tiny_fast(template_name: str, tool: dict, argument_key: str | None, stream: CompletionMode):
     global server
