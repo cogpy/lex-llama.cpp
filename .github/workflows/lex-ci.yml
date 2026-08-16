@@ -106,6 +106,9 @@ jobs:
           pip-install: -r tools/server/tests/requirements.txt
 
       - name: Server integration tests
+        env:
+          # lex-cpu preset installs binaries under build-lex-cpu/, not build/
+          LLAMA_SERVER_BIN_PATH: ${{ github.workspace }}/build-lex-cpu/bin/llama-server
         run: |
           cd tools/server/tests
           pytest -v -x -m "not slow"
