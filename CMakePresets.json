@@ -90,6 +90,66 @@
     { "name": "x64-windows-sycl-release-f16", "inherits": [ "sycl-base", "release", "sycl_f16" ] },
 
     { "name": "x64-windows-vulkan-debug", "inherits": [ "base", "vulkan", "debug" ] },
-    { "name": "x64-windows-vulkan-release", "inherits": [ "base", "vulkan", "release" ] }
+    { "name": "x64-windows-vulkan-release", "inherits": [ "base", "vulkan", "release" ] },
+
+    {
+      "name": "lex-cpu",
+      "displayName": "Lex CPU (Release)",
+      "description": "Opinionated Lex Tier-1 CPU build used by docs/lex and lex-ci",
+      "inherits": [ "base", "release" ],
+      "cacheVariables": {
+        "LLAMA_BUILD_TESTS": "ON",
+        "LLAMA_BUILD_TOOLS": "ON",
+        "LLAMA_BUILD_EXAMPLES": "OFF",
+        "LLAMA_BUILD_SERVER": "ON",
+        "GGML_NATIVE": "OFF"
+      }
+    },
+    {
+      "name": "lex-cuda",
+      "displayName": "Lex CUDA (Release)",
+      "description": "Lex Tier-1 CUDA build (requires CUDA toolkit)",
+      "inherits": [ "lex-cpu" ],
+      "cacheVariables": {
+        "GGML_CUDA": "ON"
+      }
+    },
+    {
+      "name": "lex-metal",
+      "displayName": "Lex Metal (Release)",
+      "description": "Lex Tier-1 Metal build (macOS Apple Silicon)",
+      "inherits": [ "lex-cpu" ],
+      "cacheVariables": {
+        "GGML_METAL": "ON",
+        "GGML_METAL_EMBED_LIBRARY": "ON"
+      }
+    },
+    {
+      "name": "lex-vulkan",
+      "displayName": "Lex Vulkan (Release)",
+      "description": "Lex Tier-1 Vulkan build (requires Vulkan SDK)",
+      "inherits": [ "lex-cpu" ],
+      "cacheVariables": {
+        "GGML_VULKAN": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "lex-cpu",
+      "configurePreset": "lex-cpu"
+    },
+    {
+      "name": "lex-cuda",
+      "configurePreset": "lex-cuda"
+    },
+    {
+      "name": "lex-metal",
+      "configurePreset": "lex-metal"
+    },
+    {
+      "name": "lex-vulkan",
+      "configurePreset": "lex-vulkan"
+    }
   ]
 }
