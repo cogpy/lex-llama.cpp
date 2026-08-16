@@ -206,7 +206,7 @@ common_peg_parser analyze_tools::build_tool_parser_json_native(parser_build_cont
             format.fun_name_is_key, format.id_field, format.gen_id_field, format.parameter_order);
         tools_parser = inputs.parallel_tool_calls
             ? p.trigger_rule("tool-calls", p.one_or_more(single_tool_parser + p.space()))
-            : single_tool_parser;
+            : p.trigger_rule("tool-calls", single_tool_parser);
     } else {
         tools_parser = p.standard_json_tools(
             format.section_start, format.section_end, inputs.tools, inputs.parallel_tool_calls,
